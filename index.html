@@ -4,24 +4,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glassmorphism Music Player</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: #fff;
+        }
+
+        /* Background Slideshow */
+        .bg-slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .bg-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .bg-slide.active {
+            opacity: 1;
+        }
+
+        /* Main Container */
+        .player-container {
+            width: 90%;
+            max-width: 850px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Base Glassmorphism Style */
+        .playlist-window, .glass-bar {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border-radius: 20px;
+        }
+
+        /* Playlist Window Drawer */
+        .playlist-window {
+            position: absolute;
+            bottom: 85px;
+            left: 0;
+            width: 100%;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-window.open {
+            max-height: 350px;
+            opacity: 1;
+            padding: 20px;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .song-list {
+            list-style: none;
+            overflow-y: auto;
+            max-height: 250px;
+        }
+
+        .song-item {
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+
+        .song-item:hover, .song-item.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Glass Bar (Player Controls) */
+        .glass-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            gap: 20px;
+        }
+
+        .track-info-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            width: 25%;
+        }
+
+        .album-art {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .track-details {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .track-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        .chevron-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* Controls Structure */
+        .player-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 55%;
+        }
+
+        .buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .icon-btn.active-mode {
+            color: #4ade80;
+        }
+
+        .play-pause-btn {
+            background: #fff;
+            color: #000;
+            padding: 10px;
+            border-radius: 50%;
+        }
+
+        .play-pause-btn:hover {
+            color: #000;
+            transform: scale(1.08);
+        }
+
+        /* Sliders */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            font-size: 0.75rem;
+        }
+
+        input[type="range"] {
+            accent-color: #fff;
+            cursor: pointer;
+            height: 4px;
+            width: 100%;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 20%;
+        }
+    </style>
 </head>
 <body>
-    <!-- Background Slideshow -->
     <div class="bg-slideshow">
-        <div class="bg-slide active" style="background-image: url('images/10633.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('images/10632.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('images/10630.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('images/10631.jpg');"></div>
+        <div class="bg-slide active" style="background-image: url('10633.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('10632.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('10630.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('10631.jpg');"></div>
     </div>
 
-    <!-- Hidden File Input -->
     <input type="file" id="file-input" accept="audio/*" multiple style="display: none;">
 
     <div class="player-container">
-        <!-- Expanded Playlist Drawer -->
         <div class="playlist-window" id="playlist-window">
             <div class="playlist-header">
                 <h3>Your Playlist</h3>
@@ -30,32 +278,28 @@
                 </button>
             </div>
             <ul class="song-list" id="song-list">
-                <!-- Song items injected by JS -->
-            </ul>
+                </ul>
         </div>
 
-        <!-- Glassmorphism Bottom Control Bar -->
         <div class="glass-bar" id="glass-bar">
-            <!-- Currently Playing Info / Drawer Trigger -->
             <div class="track-info-container" id="track-trigger">
                 <div class="album-art">
                     <i data-lucide="music"></i>
                 </div>
                 <div class="track-details">
                     <span class="track-title" id="track-title">No song loaded</span>
-                    <span class="track-artist" id="track-artist">Click to open playlist & upload</span>
+                    <span class="track-artist" id="track-artist">Click to open playlist</span>
                 </div>
                 <i data-lucide="chevron-up" class="chevron-icon" id="chevron-icon"></i>
             </div>
 
-            <!-- Controls & Seek Bar -->
             <div class="player-controls">
                 <div class="buttons">
-                    <button id="shuffle-btn" class="icon-btn" title="Shuffle"><i data-lucide="shuffle"></i></button>
-                    <button id="prev-btn" class="icon-btn" title="Previous"><i data-lucide="skip-back"></i></button>
-                    <button id="play-btn" class="icon-btn play-pause-btn" title="Play/Pause"><i data-lucide="play"></i></button>
-                    <button id="next-btn" class="icon-btn" title="Next"><i data-lucide="skip-forward"></i></button>
-                    <button id="repeat-btn" class="icon-btn" title="Repeat"><i data-lucide="repeat"></i></button>
+                    <button id="shuffle-btn" class="icon-btn" title="Shuffle Mode"><i data-lucide="shuffle"></i></button>
+                    <button id="prev-btn" class="icon-btn" title="Previous Track"><i data-lucide="skip-back"></i></button>
+                    <button id="play-btn" class="icon-btn play-pause-btn" title="Play / Pause"><i data-lucide="play"></i></button>
+                    <button id="next-btn" class="icon-btn" title="Next Track"><i data-lucide="skip-forward"></i></button>
+                    <button id="repeat-btn" class="icon-btn" title="Repeat Mode"><i data-lucide="repeat"></i></button>
                 </div>
                 <div class="progress-container">
                     <span id="current-time">0:00</span>
@@ -64,7 +308,6 @@
                 </div>
             </div>
 
-            <!-- Volume Slider -->
             <div class="volume-container">
                 <i data-lucide="volume-2" id="volume-icon"></i>
                 <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="0.8">
@@ -73,6 +316,178 @@
     </div>
 
     <audio id="audio-player"></audio>
-    <script src="script.js"></script>
+
+    <script>
+        // Render Icons
+        lucide.createIcons();
+
+        // Elements
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        const seekBar = document.getElementById('seek-bar');
+        const volumeBar = document.getElementById('volume-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const trackTitle = document.getElementById('track-title');
+        const trackArtist = document.getElementById('track-artist');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const songListEl = document.getElementById('song-list');
+        const playlistWindow = document.getElementById('playlist-window');
+        const trackTrigger = document.getElementById('track-trigger');
+        const chevronIcon = document.getElementById('chevron-icon');
+
+        // State Variables
+        let playlist = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        // Dynamic Background Slideshow
+        const slides = document.querySelectorAll('.bg-slide');
+        let currentSlide = 0;
+        setInterval(() => {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }, 6000);
+
+        // Toggle Playlist Drawer
+        trackTrigger.addEventListener('click', () => {
+            playlistWindow.classList.toggle('open');
+            chevronIcon.classList.toggle('rotated');
+        });
+
+        // Handle File Uploads
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const song = {
+                    title: file.name.replace(/\.[^/.]+$/, ""),
+                    artist: "Local Track",
+                    url: URL.createObjectURL(file)
+                };
+                playlist.push(song);
+            });
+            updatePlaylistUI();
+            if (playlist.length > 0 && trackTitle.innerText === "No song loaded") {
+                loadSong(0);
+            }
+        });
+
+        function updatePlaylistUI() {
+            songListEl.innerHTML = "";
+            playlist.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.className = `song-item ${index === currentIndex ? 'active' : ''}`;
+                li.innerHTML = `<span>${song.title}</span>`;
+                li.addEventListener('click', () => {
+                    currentIndex = index;
+                    loadSong(currentIndex);
+                    playSong();
+                });
+                songListEl.appendChild(li);
+            });
+        }
+
+        // Playback Engine
+        function loadSong(index) {
+            if (!playlist[index]) return;
+            audio.src = playlist[index].url;
+            trackTitle.innerText = playlist[index].title;
+            trackArtist.innerText = playlist[index].artist;
+            updatePlaylistUI();
+        }
+
+        function playSong() {
+            if (!audio.src) return;
+            isPlaying = true;
+            audio.play();
+            playBtn.innerHTML = `<i data-lucide="pause"></i>`;
+            lucide.createIcons();
+        }
+
+        function pauseSong() {
+            isPlaying = false;
+            audio.pause();
+            playBtn.innerHTML = `<i data-lucide="play"></i>`;
+            lucide.createIcons();
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) pauseSong();
+            else playSong();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (playlist.length === 0) return;
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            loadSong(currentIndex);
+            playSong();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (playlist.length === 0) return;
+            if (isShuffle) {
+                currentIndex = Math.floor(Math.random() * playlist.length);
+            } else {
+                currentIndex = (currentIndex + 1) % playlist.length;
+            }
+            loadSong(currentIndex);
+            playSong();
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('active-mode', isShuffle);
+        });
+
+        repeatBtn.addEventListener('click', () => {
+            isRepeat = !isRepeat;
+            repeatBtn.classList.toggle('active-mode', isRepeat);
+        });
+
+        // Loop / Next Track Logic
+        audio.addEventListener('ended', () => {
+            if (isRepeat) {
+                playSong();
+            } else {
+                nextBtn.click();
+            }
+        });
+
+        // Seek Bar & Time Sync
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const progressPercent = (audio.currentTime / audio.duration) * 100;
+                seekBar.value = progressPercent;
+                currentTimeEl.innerText = formatTime(audio.currentTime);
+                durationEl.innerText = formatTime(audio.duration);
+            }
+        });
+
+        seekBar.addEventListener('input', () => {
+            if (audio.duration) {
+                audio.currentTime = (seekBar.value / 100) * audio.duration;
+            }
+        });
+
+        volumeBar.addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+        });
+
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+    </script>
 </body>
 </html>
