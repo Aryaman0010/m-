@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glassmorphism Music Player</title>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
@@ -53,7 +52,7 @@
             max-width: 480px;
             position: relative;
             z-index: 10;
-            margin-top: 15vh; /* Shifts player slightly lower than exact center */
+            margin-top: 15vh;
         }
 
         /* Base Glassmorphism Style */
@@ -82,7 +81,7 @@
         }
 
         .playlist-window.open {
-            max-height: 320px;
+            max-height: 380px;
             opacity: 1;
             pointer-events: auto;
             padding: 20px;
@@ -90,24 +89,31 @@
 
         .playlist-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 12px;
             padding-bottom: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        .folder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
         .upload-btn {
+            flex: 1;
             background: rgba(255, 255, 255, 0.25);
             border: none;
             color: #fff;
-            padding: 8px 14px;
+            padding: 8px 10px;
             border-radius: 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.8rem;
             font-weight: 500;
             transition: background 0.2s;
         }
@@ -116,10 +122,37 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 6px 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+
         .song-list {
             list-style: none;
             overflow-y: auto;
-            max-height: 220px;
+            max-height: 200px;
         }
 
         .song-item {
@@ -146,7 +179,6 @@
             gap: 16px;
         }
 
-        /* Track Info & Toggle Header */
         .track-info-container {
             display: flex;
             align-items: center;
@@ -201,7 +233,6 @@
             transform: rotate(180deg);
         }
 
-        /* Seek Bar & Timers */
         .progress-container {
             display: flex;
             align-items: center;
@@ -211,7 +242,6 @@
             opacity: 0.9;
         }
 
-        /* Range Input Formatting */
         input[type="range"] {
             accent-color: #ffffff;
             cursor: pointer;
@@ -220,7 +250,6 @@
             border-radius: 2px;
         }
 
-        /* Controls Row */
         .buttons-row {
             display: flex;
             align-items: center;
@@ -261,7 +290,6 @@
             transform: scale(1.08);
         }
 
-        /* Volume Controls Row */
         .volume-container {
             display: flex;
             align-items: center;
@@ -272,7 +300,6 @@
     </style>
 </head>
 <body>
-    <!-- Background Slideshow -->
     <div class="bg-slideshow">
         <div class="bg-slide active" style="background-image: url('10633.jpg');"></div>
         <div class="bg-slide" style="background-image: url('10632.jpg');"></div>
@@ -280,26 +307,30 @@
         <div class="bg-slide" style="background-image: url('10631.jpg');"></div>
     </div>
 
-    <!-- Hidden File Input -->
-    <input type="file" id="file-input" accept="audio/*" multiple style="display: none;">
+    <input type="file" id="main-folder-input" accept="audio/*" multiple style="display: none;">
+    <input type="file" id="reel-folder-input" accept="audio/*" multiple style="display: none;">
 
     <div class="player-container">
-        <!-- Expanded Playlist Drawer -->
         <div class="playlist-window" id="playlist-window">
             <div class="playlist-header">
-                <h3>Your Playlist</h3>
-                <button class="upload-btn" id="upload-btn">
-                    <i data-lucide="folder-plus"></i> Add Songs
-                </button>
+                <div class="folder-actions">
+                    <button class="upload-btn" id="upload-main-btn">
+                        <i data-lucide="folder-plus"></i> Add All Songs
+                    </button>
+                    <button class="upload-btn" id="upload-reel-btn">
+                        <i data-lucide="film"></i> Add Reel Songs
+                    </button>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-main">All Songs (0)</button>
+                    <button class="tab-btn" id="tab-reel">Reels (0)</button>
+                </div>
             </div>
             <ul class="song-list" id="song-list">
-                <!-- Dynamic song items -->
-            </ul>
+                </ul>
         </div>
 
-        <!-- Glassmorphism Main Player -->
         <div class="glass-bar">
-            <!-- Header Section (Click to toggle playlist) -->
             <div class="track-info-container" id="track-trigger">
                 <div class="track-meta">
                     <div class="album-art">
@@ -313,14 +344,12 @@
                 <i data-lucide="chevron-up" class="chevron-icon" id="chevron-icon"></i>
             </div>
 
-            <!-- Progress Bar -->
             <div class="progress-container">
                 <span id="current-time">0:00</span>
                 <input type="range" id="seek-bar" value="0" min="0" max="100">
                 <span id="duration">0:00</span>
             </div>
 
-            <!-- Main Playback Buttons -->
             <div class="buttons-row">
                 <button id="shuffle-btn" class="icon-btn" title="Shuffle Mode"><i data-lucide="shuffle"></i></button>
                 <button id="prev-btn" class="icon-btn" title="Previous Track"><i data-lucide="skip-back"></i></button>
@@ -329,7 +358,6 @@
                 <button id="repeat-btn" class="icon-btn" title="Repeat Mode"><i data-lucide="repeat"></i></button>
             </div>
 
-            <!-- Volume Control -->
             <div class="volume-container">
                 <i data-lucide="volume-2" id="volume-icon"></i>
                 <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="0.8">
@@ -354,14 +382,24 @@
         const durationEl = document.getElementById('duration');
         const trackTitle = document.getElementById('track-title');
         const trackArtist = document.getElementById('track-artist');
-        const fileInput = document.getElementById('file-input');
-        const uploadBtn = document.getElementById('upload-btn');
+        
+        const mainFolderInput = document.getElementById('main-folder-input');
+        const reelFolderInput = document.getElementById('reel-folder-input');
+        const uploadMainBtn = document.getElementById('upload-main-btn');
+        const uploadReelBtn = document.getElementById('upload-reel-btn');
+        
+        const tabMain = document.getElementById('tab-main');
+        const tabReel = document.getElementById('tab-reel');
         const songListEl = document.getElementById('song-list');
         const playlistWindow = document.getElementById('playlist-window');
         const trackTrigger = document.getElementById('track-trigger');
         const chevronIcon = document.getElementById('chevron-icon');
 
-        let playlist = [];
+        // Playlists State
+        let mainPlaylist = [];
+        let reelPlaylist = [];
+        let activeTab = 'main'; // 'main' or 'reel'
+        
         let currentIndex = 0;
         let isPlaying = false;
         let isShuffle = false;
@@ -382,28 +420,65 @@
             chevronIcon.classList.toggle('rotated');
         });
 
-        // File Uploading
-        uploadBtn.addEventListener('click', () => fileInput.click());
+        // Folder Upload Listeners
+        uploadMainBtn.addEventListener('click', () => mainFolderInput.click());
+        uploadReelBtn.addEventListener('click', () => reelFolderInput.click());
 
-        fileInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                const song = {
+        mainFolderInput.addEventListener('change', (e) => {
+            handleFileUpload(e.target.files, mainPlaylist, 'All Songs');
+            tabMain.innerText = `All Songs (${mainPlaylist.length})`;
+            if (activeTab === 'main') updatePlaylistUI();
+        });
+
+        reelFolderInput.addEventListener('change', (e) => {
+            handleFileUpload(e.target.files, reelPlaylist, 'Reels');
+            tabReel.innerText = `Reels (${reelPlaylist.length})`;
+            if (activeTab === 'reel') updatePlaylistUI();
+        });
+
+        function handleFileUpload(files, targetArray, categoryLabel) {
+            Array.from(files).forEach(file => {
+                targetArray.push({
                     title: file.name.replace(/\.[^/.]+$/, ""),
-                    artist: "Local Track",
+                    artist: categoryLabel,
                     url: URL.createObjectURL(file)
-                };
-                playlist.push(song);
+                });
             });
-            updatePlaylistUI();
-            if (playlist.length > 0 && trackTitle.innerText === "No song loaded") {
+            const activeList = getActivePlaylist();
+            if (activeList.length > 0 && trackTitle.innerText === "No song loaded") {
                 loadSong(0);
             }
+        }
+
+        // Tab Switching
+        tabMain.addEventListener('click', () => {
+            activeTab = 'main';
+            tabMain.classList.add('active');
+            tabReel.classList.remove('active');
+            updatePlaylistUI();
         });
+
+        tabReel.addEventListener('click', () => {
+            activeTab = 'reel';
+            tabReel.classList.add('active');
+            tabMain.classList.remove('active');
+            updatePlaylistUI();
+        });
+
+        function getActivePlaylist() {
+            return activeTab === 'main' ? mainPlaylist : reelPlaylist;
+        }
 
         function updatePlaylistUI() {
             songListEl.innerHTML = "";
-            playlist.forEach((song, index) => {
+            const currentList = getActivePlaylist();
+            
+            if (currentList.length === 0) {
+                songListEl.innerHTML = `<li class="song-item" style="opacity: 0.6; justify-content: center;">No tracks uploaded yet</li>`;
+                return;
+            }
+
+            currentList.forEach((song, index) => {
                 const li = document.createElement('li');
                 li.className = `song-item ${index === currentIndex ? 'active' : ''}`;
                 li.innerHTML = `<span>${song.title}</span>`;
@@ -418,10 +493,11 @@
 
         // Playback Operations
         function loadSong(index) {
-            if (!playlist[index]) return;
-            audio.src = playlist[index].url;
-            trackTitle.innerText = playlist[index].title;
-            trackArtist.innerText = playlist[index].artist;
+            const currentList = getActivePlaylist();
+            if (!currentList[index]) return;
+            audio.src = currentList[index].url;
+            trackTitle.innerText = currentList[index].title;
+            trackArtist.innerText = currentList[index].artist;
             updatePlaylistUI();
         }
 
@@ -446,18 +522,20 @@
         });
 
         prevBtn.addEventListener('click', () => {
-            if (playlist.length === 0) return;
-            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            const currentList = getActivePlaylist();
+            if (currentList.length === 0) return;
+            currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
             loadSong(currentIndex);
             playSong();
         });
 
         nextBtn.addEventListener('click', () => {
-            if (playlist.length === 0) return;
+            const currentList = getActivePlaylist();
+            if (currentList.length === 0) return;
             if (isShuffle) {
-                currentIndex = Math.floor(Math.random() * playlist.length);
+                currentIndex = Math.floor(Math.random() * currentList.length);
             } else {
-                currentIndex = (currentIndex + 1) % playlist.length;
+                currentIndex = (currentIndex + 1) % currentList.length;
             }
             loadSong(currentIndex);
             playSong();
@@ -505,6 +583,8 @@
             const sec = Math.floor(seconds % 60);
             return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
+
+        updatePlaylistUI();
     </script>
 </body>
 </html>
