@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glassmorphism Music Player</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Background Slideshow -->
+    <div class="bg-slideshow">
+        <div class="bg-slide active" style="background-image: url('images/10633.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('images/10632.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('images/10630.jpg');"></div>
+        <div class="bg-slide" style="background-image: url('images/10631.jpg');"></div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="file-input" accept="audio/*" multiple style="display: none;">
+
+    <div class="player-container">
+        <!-- Expanded Playlist Drawer -->
+        <div class="playlist-window" id="playlist-window">
+            <div class="playlist-header">
+                <h3>Your Playlist</h3>
+                <button class="upload-btn" id="upload-btn">
+                    <i data-lucide="folder-plus"></i> Add Songs
+                </button>
+            </div>
+            <ul class="song-list" id="song-list">
+                <!-- Song items injected by JS -->
+            </ul>
+        </div>
+
+        <!-- Glassmorphism Bottom Control Bar -->
+        <div class="glass-bar" id="glass-bar">
+            <!-- Currently Playing Info / Drawer Trigger -->
+            <div class="track-info-container" id="track-trigger">
+                <div class="album-art">
+                    <i data-lucide="music"></i>
+                </div>
+                <div class="track-details">
+                    <span class="track-title" id="track-title">No song loaded</span>
+                    <span class="track-artist" id="track-artist">Click to open playlist & upload</span>
+                </div>
+                <i data-lucide="chevron-up" class="chevron-icon" id="chevron-icon"></i>
+            </div>
+
+            <!-- Controls & Seek Bar -->
+            <div class="player-controls">
+                <div class="buttons">
+                    <button id="shuffle-btn" class="icon-btn" title="Shuffle"><i data-lucide="shuffle"></i></button>
+                    <button id="prev-btn" class="icon-btn" title="Previous"><i data-lucide="skip-back"></i></button>
+                    <button id="play-btn" class="icon-btn play-pause-btn" title="Play/Pause"><i data-lucide="play"></i></button>
+                    <button id="next-btn" class="icon-btn" title="Next"><i data-lucide="skip-forward"></i></button>
+                    <button id="repeat-btn" class="icon-btn" title="Repeat"><i data-lucide="repeat"></i></button>
+                </div>
+                <div class="progress-container">
+                    <span id="current-time">0:00</span>
+                    <input type="range" id="seek-bar" value="0" min="0" max="100">
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Volume Slider -->
+            <div class="volume-container">
+                <i data-lucide="volume-2" id="volume-icon"></i>
+                <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="0.8">
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio-player"></audio>
+    <script src="script.js"></script>
+</body>
+</html>
