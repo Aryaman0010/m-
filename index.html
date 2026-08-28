@@ -404,6 +404,25 @@
         let isShuffle = false;
         let isRepeat = false;
 
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+    fetch('songs.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(songs => {
+            // Replace 'allSongs' with your actual state array name
+            allSongs = songs; 
+            // Call your function that renders the list in the UI
+            renderPlaylist(allSongs); 
+        })
+        .catch(error => console.error('Error loading songs.json:', error));
+});
+
         // Auto-fetch catalog from songs.json
         async function fetchCatalog() {
             try {
