@@ -337,8 +337,8 @@
                         <i data-lucide="music"></i>
                     </div>
                     <div class="track-details">
-                        <span class="track-title" id="track-title">No song loaded</span>
-                        <span class="track-artist" id="track-artist">Click to open playlist</span>
+                        <span class="track-title" id="track-title">Loading tracks...</span>
+                        <span class="track-artist" id="track-artist">Please wait</span>
                     </div>
                 </div>
                 <i data-lucide="chevron-up" class="chevron-icon" id="chevron-icon"></i>
@@ -395,15 +395,39 @@
         const trackTrigger = document.getElementById('track-trigger');
         const chevronIcon = document.getElementById('chevron-icon');
 
-        // Playlists State
         let mainPlaylist = [];
         let reelPlaylist = [];
-        let activeTab = 'main'; // 'main' or 'reel'
+        let activeTab = 'main';
         
         let currentIndex = 0;
         let isPlaying = false;
         let isShuffle = false;
         let isRepeat = false;
+
+        // Auto-fetch catalog from songs.json
+        async function fetchCatalog() {
+            try {
+                const response = await fetch('songs.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.main) mainPlaylist = data.main;
+                    if (data.reels) reelPlaylist = data.reels;
+                }
+            } catch (err) {
+                console.log('No songs.json found or failed to load. Manual upload available.');
+            }
+            
+            updateTabLabels();
+            updatePlaylistUI();
+
+            const currentList = getActivePlaylist();
+            if (currentList.length > 0) {
+                loadSong(0);
+            } else {
+                trackTitle.innerText = "No song loaded";
+                trackArtist.innerText = "Click to open playlist & upload";
+            }
+        }
 
         // Background Slideshow
         const slides = document.querySelectorAll('.bg-slide');
@@ -420,26 +444,26 @@
             chevronIcon.classList.toggle('rotated');
         });
 
-        // Folder Upload Listeners
+        // Manual Folder Uploads (Extracts exact file names automatically)
         uploadMainBtn.addEventListener('click', () => mainFolderInput.click());
         uploadReelBtn.addEventListener('click', () => reelFolderInput.click());
 
         mainFolderInput.addEventListener('change', (e) => {
             handleFileUpload(e.target.files, mainPlaylist, 'All Songs');
-            tabMain.innerText = `All Songs (${mainPlaylist.length})`;
+            updateTabLabels();
             if (activeTab === 'main') updatePlaylistUI();
         });
 
         reelFolderInput.addEventListener('change', (e) => {
             handleFileUpload(e.target.files, reelPlaylist, 'Reels');
-            tabReel.innerText = `Reels (${reelPlaylist.length})`;
+            updateTabLabels();
             if (activeTab === 'reel') updatePlaylistUI();
         });
 
         function handleFileUpload(files, targetArray, categoryLabel) {
             Array.from(files).forEach(file => {
                 targetArray.push({
-                    title: file.name.replace(/\.[^/.]+$/, ""),
+                    title: file.name.replace(/\.[^/.]+$/, ""), // Extracts clean song name without extension
                     artist: categoryLabel,
                     url: URL.createObjectURL(file)
                 });
@@ -448,6 +472,11 @@
             if (activeList.length > 0 && trackTitle.innerText === "No song loaded") {
                 loadSong(0);
             }
+        }
+
+        function updateTabLabels() {
+            tabMain.innerText = `All Songs (${mainPlaylist.length})`;
+            tabReel.innerText = `Reels (${reelPlaylist.length})`;
         }
 
         // Tab Switching
@@ -474,7 +503,7 @@
             const currentList = getActivePlaylist();
             
             if (currentList.length === 0) {
-                songListEl.innerHTML = `<li class="song-item" style="opacity: 0.6; justify-content: center;">No tracks uploaded yet</li>`;
+                songListEl.innerHTML = `<li class="song-item" style="opacity: 0.6; justify-content: center;">No tracks available</li>`;
                 return;
             }
 
@@ -491,7 +520,7 @@
             });
         }
 
-        // Playback Operations
+        // Playback Controls
         function loadSong(index) {
             const currentList = getActivePlaylist();
             if (!currentList[index]) return;
@@ -584,7 +613,8 @@
             return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
-        updatePlaylistUI();
+        // Initialize Fetch catalog on load
+        fetchCatalog();
     </script>
 </body>
 </html>
