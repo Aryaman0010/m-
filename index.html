@@ -326,8 +326,7 @@
                     <button class="tab-btn" id="tab-reel">Reels (0)</button>
                 </div>
             </div>
-            <ul class="song-list" id="song-list">
-                </ul>
+            <ul class="song-list" id="song-list"></ul>
         </div>
 
         <div class="glass-bar">
@@ -404,36 +403,40 @@
         let isShuffle = false;
         let isRepeat = false;
 
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-    fetch('songs.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(songs => {
-            // Replace 'allSongs' with your actual state array name
-            allSongs = songs; 
-            // Call your function that renders the list in the UI
-            renderPlaylist(allSongs); 
-        })
-        .catch(error => console.error('Error loading songs.json:', error));
-});
-
         // Auto-fetch catalog from songs.json
         async function fetchCatalog() {
             try {
                 const response = await fetch('songs.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.main) mainPlaylist = data.main;
-                    if (data.reels) reelPlaylist = data.reels;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Process flat array or object format ({ main: [], reels: [] })
+                if (Array.isArray(data)) {
+                    mainPlaylist = data.map(song => ({
+                        title: song.title,
+                        artist: song.artist || 'Unknown Artist',
+                        url: song.file_path || song.url
+                    }));
+                } else {
+                    if (data.main) {
+                        mainPlaylist = data.main.map(song => ({
+                            title: song.title,
+                            artist: song.artist || 'Unknown Artist',
+                            url: song.file_path || song.url
+                        }));
+                    }
+                    if (data.reels) {
+                        reelPlaylist = data.reels.map(song => ({
+                            title: song.title,
+                            artist: song.artist || 'Unknown Artist',
+                            url: song.file_path || song.url
+                        }));
+                    }
                 }
             } catch (err) {
-                console.log('No songs.json found or failed to load. Manual upload available.');
+                console.warn('Could not load songs.json or failed to load. Manual upload available.', err);
             }
             
             updateTabLabels();
@@ -463,7 +466,7 @@
             chevronIcon.classList.toggle('rotated');
         });
 
-        // Manual Folder Uploads (Extracts exact file names automatically)
+        // Manual Folder Uploads
         uploadMainBtn.addEventListener('click', () => mainFolderInput.click());
         uploadReelBtn.addEventListener('click', () => reelFolderInput.click());
 
@@ -482,7 +485,7 @@
         function handleFileUpload(files, targetArray, categoryLabel) {
             Array.from(files).forEach(file => {
                 targetArray.push({
-                    title: file.name.replace(/\.[^/.]+$/, ""), // Extracts clean song name without extension
+                    title: file.name.replace(/\.[^/.]+$/, ""),
                     artist: categoryLabel,
                     url: URL.createObjectURL(file)
                 });
@@ -503,6 +506,7 @@
             activeTab = 'main';
             tabMain.classList.add('active');
             tabReel.classList.remove('active');
+            currentIndex = 0;
             updatePlaylistUI();
         });
 
@@ -510,6 +514,7 @@
             activeTab = 'reel';
             tabReel.classList.add('active');
             tabMain.classList.remove('active');
+            currentIndex = 0;
             updatePlaylistUI();
         });
 
@@ -552,7 +557,7 @@
         function playSong() {
             if (!audio.src) return;
             isPlaying = true;
-            audio.play();
+            audio.play().catch(e => console.log('Autoplay prevented or interrupted:', e));
             playBtn.innerHTML = `<i data-lucide="pause"></i>`;
             lucide.createIcons();
         }
@@ -632,8 +637,8 @@
             return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
-        // Initialize Fetch catalog on load
-        fetchCatalog();
+        // Initialize Fetch catalog on page load
+        document.addEventListener('DOMContentLoaded', fetchCatalog);
     </script>
 </body>
 </html>
