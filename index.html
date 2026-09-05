@@ -22,7 +22,6 @@
             color: #fff;
         }
 
-        /* Background Slideshow */
         .bg-slideshow {
             position: fixed;
             top: 0;
@@ -46,7 +45,6 @@
             opacity: 1;
         }
 
-        /* Main Container Positioned Lower-Middle */
         .player-container {
             width: 90%;
             max-width: 480px;
@@ -55,7 +53,6 @@
             margin-top: 15vh;
         }
 
-        /* Base Glassmorphism Style */
         .playlist-window, .glass-bar {
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(20px);
@@ -65,7 +62,6 @@
             border-radius: 24px;
         }
 
-        /* Playlist Window Drawer - Slides Up */
         .playlist-window {
             position: absolute;
             bottom: calc(100% + 15px);
@@ -122,7 +118,6 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* Tab Navigation */
         .tabs {
             display: flex;
             gap: 8px;
@@ -171,7 +166,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* Glass Bar Player Main Panel */
         .glass-bar {
             padding: 20px;
             display: flex;
@@ -308,8 +302,8 @@
         <div class="bg-slide" style="background-image: url('file_000000005edc720894ba14b2d810aa95.png');"></div>
     </div>
 
-    <input type="file" id="main-folder-input" accept="audio/*" multiple style="display: none;">
-    <input type="file" id="reel-folder-input" accept="audio/*" multiple style="display: none;">
+    <input type="file" id="main-folder-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" multiple style="display: none;">
+    <input type="file" id="reel-folder-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" multiple style="display: none;">
 
     <div class="player-container">
         <div class="playlist-window" id="playlist-window">
@@ -404,7 +398,14 @@
         let isShuffle = false;
         let isRepeat = false;
 
-        // Auto-fetch catalog from songs.json
+        function processUrl(rawPath) {
+            if (!rawPath) return '';
+            if (rawPath.startsWith('blob:') || rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
+                return rawPath;
+            }
+            return encodeURI(rawPath);
+        }
+
         async function fetchCatalog() {
             try {
                 const response = await fetch('songs.json');
@@ -413,26 +414,25 @@
                 }
                 const data = await response.json();
 
-                // Process flat array or object format ({ main: [], reels: [] })
                 if (Array.isArray(data)) {
                     mainPlaylist = data.map(song => ({
                         title: song.title,
                         artist: song.artist || 'Unknown Artist',
-                        url: song.file_path || song.url
+                        url: processUrl(song.file_path || song.url)
                     }));
                 } else {
                     if (data.main) {
                         mainPlaylist = data.main.map(song => ({
                             title: song.title,
                             artist: song.artist || 'Unknown Artist',
-                            url: song.file_path || song.url
+                            url: processUrl(song.file_path || song.url)
                         }));
                     }
                     if (data.reels) {
                         reelPlaylist = data.reels.map(song => ({
                             title: song.title,
                             artist: song.artist || 'Unknown Artist',
-                            url: song.file_path || song.url
+                            url: processUrl(song.file_path || song.url)
                         }));
                     }
                 }
@@ -452,7 +452,6 @@
             }
         }
 
-        // Background Slideshow
         const slides = document.querySelectorAll('.bg-slide');
         let currentSlide = 0;
         setInterval(() => {
@@ -461,13 +460,11 @@
             slides[currentSlide].classList.add('active');
         }, 6000);
 
-        // Toggle Playlist Drawer
         trackTrigger.addEventListener('click', () => {
             playlistWindow.classList.toggle('open');
             chevronIcon.classList.toggle('rotated');
         });
 
-        // Manual Folder Uploads
         uploadMainBtn.addEventListener('click', () => mainFolderInput.click());
         uploadReelBtn.addEventListener('click', () => reelFolderInput.click());
 
@@ -492,7 +489,7 @@
                 });
             });
             const activeList = getActivePlaylist();
-            if (activeList.length > 0 && trackTitle.innerText === "No song loaded") {
+            if (activeList.length > 0 && (trackTitle.innerText === "No song loaded" || !audio.src)) {
                 loadSong(0);
             }
         }
@@ -502,7 +499,6 @@
             tabReel.innerText = `Reels (${reelPlaylist.length})`;
         }
 
-        // Tab Switching
         tabMain.addEventListener('click', () => {
             activeTab = 'main';
             tabMain.classList.add('active');
@@ -545,22 +541,42 @@
             });
         }
 
-        // Playback Controls
+        function setupMediaSession(song) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: song.title,
+                    artist: song.artist,
+                    album: 'Glassmorphism Player'
+                });
+
+                navigator.mediaSession.setActionHandler('play', () => playSong());
+                navigator.mediaSession.setActionHandler('pause', () => pauseSong());
+                navigator.mediaSession.setActionHandler('previoustrack', () => prevBtn.click());
+                navigator.mediaSession.setActionHandler('nexttrack', () => nextBtn.click());
+            }
+        }
+
         function loadSong(index) {
             const currentList = getActivePlaylist();
             if (!currentList[index]) return;
-            audio.src = currentList[index].url;
-            trackTitle.innerText = currentList[index].title;
-            trackArtist.innerText = currentList[index].artist;
+            
+            const song = currentList[index];
+            audio.src = song.url;
+            trackTitle.innerText = song.title;
+            trackArtist.innerText = song.artist;
+            setupMediaSession(song);
             updatePlaylistUI();
         }
 
         function playSong() {
             if (!audio.src) return;
-            isPlaying = true;
-            audio.play().catch(e => console.log('Autoplay prevented or interrupted:', e));
-            playBtn.innerHTML = `<i data-lucide="pause"></i>`;
-            lucide.createIcons();
+            audio.play().then(() => {
+                isPlaying = true;
+                playBtn.innerHTML = `<i data-lucide="pause"></i>`;
+                lucide.createIcons();
+            }).catch(e => {
+                console.warn('Playback error or interrupted:', e);
+            });
         }
 
         function pauseSong() {
@@ -605,6 +621,14 @@
             repeatBtn.classList.toggle('active-mode', isRepeat);
         });
 
+        audio.addEventListener('error', (e) => {
+            console.error("Audio failed to load:", audio.src, e);
+            const currentList = getActivePlaylist();
+            if (currentList.length > 1) {
+                nextBtn.click();
+            }
+        });
+
         audio.addEventListener('ended', () => {
             if (isRepeat) {
                 playSong();
@@ -638,7 +662,6 @@
             return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
-        // Initialize Fetch catalog on page load
         document.addEventListener('DOMContentLoaded', fetchCatalog);
     </script>
 </body>
