@@ -295,11 +295,7 @@
 </head>
 <body>
     <div class="bg-slideshow">
-        <div class="bg-slide active" style="background-image: url('10633.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('10632.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('10630.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('10631.jpg');"></div>
-        <div class="bg-slide" style="background-image: url('file_000000005edc720894ba14b2d810aa95.png');"></div>
+        <div class="bg-slide active" style="background-image: url('SaveInta.com_786060323_18628526431035421_5031118763642636539_n.jpg');"></div>
     </div>
 
     <input type="file" id="main-folder-input" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" multiple style="display: none;">
@@ -452,18 +448,7 @@
             }
         }
 
-        const slides = document.querySelectorAll('.bg-slide');
-        let currentSlide = 0;
-        setInterval(() => {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
-        }, 6000);
-
-        trackTrigger.addEventListener('click', () => {
-            playlistWindow.classList.toggle('open');
-            chevronIcon.classList.toggle('rotated');
-        });
+       
 
         uploadMainBtn.addEventListener('click', () => mainFolderInput.click());
         uploadReelBtn.addEventListener('click', () => reelFolderInput.click());
